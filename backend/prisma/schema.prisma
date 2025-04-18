@@ -1,0 +1,63 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Game {
+  id               Int       @id @default(autoincrement())
+  title            String    // Taken from RAWG API (PUBLIC)
+  description      String    // Taken from RAWG API (PUBLIC)
+  releaseDate      DateTime  // Taken from RAWG API (PUBLIC)
+  image            String    // Taken from RAWG API (PUBLIC)
+  trailers         String[]  // Array of video URLs from RAWG API (PUBLIC)
+  screenshots      String[]  // Array of screenshot URLs from RAWG API (PUBLIC)
+  rating           Float?    // Average of all who log on the app (PUBLIC)
+  metacriticRating Int?      // Taken from RAWG API (PUBLIC)
+  genres           String[]  // Taken from RAWG API (PUBLIC)
+  tags             String[]  // Taken from RAWG API (PUBLIC)
+  developers       String[]  // Taken from RAWG API (PUBLIC)
+  publishers       String[]  // Taken from RAWG API (PUBLIC)
+  platforms        String[]  // Taken from RAWG API (PUBLIC)
+  averagePlaytime  Int?      // Taken from RAWG API (PUBLIC)
+  totalLogs        Int       @default(0) // Total number of users who logged this game (PUBLIC)
+  createdAt        DateTime  @default(now()) // Timestamp (DEVS ONLY)
+  updatedAt        DateTime  @updatedAt      // Timestamp (DEVS ONLY)
+  gameLogs         GameLog[] // GameLogs → Numbers PUBLIC, names DEVS ONLY
+}
+
+model User {
+  id             Int       @id @default(autoincrement())
+  username       String    @unique // Unique display name (PUBLIC)
+  email          String    @unique // Used for login/communication (DEVS ONLY)
+  password       String    // Encrypted password (DEVS ONLY)
+  avatar         String?   // Profile image URL (PUBLIC)
+  bio            String?   // Short personal description (PUBLIC)
+  favoriteGenres String[]  // Array of genre IDs/names (PUBLIC)
+  socialLinks    String[]  // Array of links (PUBLIC)
+  top4Games      Int[]     // Array of 4 GAME_IDs marked as favs (PUBLIC)
+  createdAt      DateTime  @default(now()) // Timestamp (DEVS ONLY)
+  updatedAt      DateTime  @updatedAt      // Timestamp (DEVS ONLY)
+  gameLogs       GameLog[] // GameLogs → Numbers PUBLIC, names DEVS ONLY
+}
+
+model GameLog {
+  id         Int      @id @default(autoincrement())
+  userId     Int      // FK to USERS table (DEVS ONLY)
+  gameId     Int      // FK to GAMES table (DEVS ONLY)
+  status     String   @default("Playing") // Enum-like status: Playing, Completed, etc. (PUBLIC)
+  userRating Float?   // User's personal rating (PUBLIC)
+  review     String?  // User's written thoughts (PUBLIC)
+  platform   String   // Played platform (e.g., PC, PS5) (PUBLIC)
+  liked      Boolean  @default(false) // Boolean: true/false (PUBLIC)
+  createdAt  DateTime @default(now()) // Timestamp (PUBLIC)
+  updatedAt  DateTime @updatedAt      // Timestamp (PUBLIC)
+
+  user       User     @relation(fields: [userId], references: [id])
+  game       Game     @relation(fields: [gameId], references: [id])
+
+  @@unique([userId, gameId]) // Prevents duplicate logs for the same user and game
+}
